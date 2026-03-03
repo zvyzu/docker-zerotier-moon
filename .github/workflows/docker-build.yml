@@ -19,7 +19,7 @@ on:
         default: true
 
 env:
-  REGISTRY_DOCKER: docker.io
+  REGISTRY_DOCKER: dhi.io
   REGISTRY_GITHUB: ghcr.io
   IMAGE_NAME_DOCKER: vyzu/zerotier-moon
   IMAGE_NAME_GITHUB: ${{ github.repository_owner }}/zerotier-moon
