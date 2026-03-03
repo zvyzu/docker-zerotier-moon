@@ -1,55 +1,55 @@
-name: 构建并推送Alpine版本Docker镜像
+name: Docker Build Alpine
 
 on:
-#   push:
-#     branches: [ main, master ]
-#     tags: [ 'v*' ]
-#     paths:
-#       - 'Dockerfile.alpine'
-#       - 'startup.sh'
-#       - '.github/workflows/docker-build-alpine.yml'
-#   pull_request:
-#     branches: [ main, master ]
-#     paths:
-#       - 'Dockerfile.alpine'
-#       - 'startup.sh'
-  workflow_dispatch:  # 手动触发
+  #   push:
+  #     branches: [ main, master ]
+  #     tags: [ 'v*' ]
+  #     paths:
+  #       - 'Dockerfile.alpine'
+  #       - 'startup.sh'
+  #       - '.github/workflows/docker-build-alpine.yml'
+  #   pull_request:
+  #     branches: [ main, master ]
+  #     paths:
+  #       - 'Dockerfile.alpine'
+  #       - 'startup.sh'
+  workflow_dispatch:
     inputs:
       ZT_VERSION:
-        description: 'ZeroTier版本号 (例如: 1.10.2-r0)'
+        description: "ZeroTier (Version: 1.10.2-r0)"
         required: true
-        default: '1.10.2-r0'
+        default: "1.10.2-r0"
       USE_LATEST_TAG:
-        description: '是否同时添加latest标签'
+        description: "latest"
         type: boolean
         required: true
-        default: false    
+        default: false
 
 env:
   REGISTRY_DOCKER: docker.io
   REGISTRY_GITHUB: ghcr.io
-  IMAGE_NAME_DOCKER: jonnyan404/zerotier-moon
+  IMAGE_NAME_DOCKER: vyzu/zerotier-moon
   IMAGE_NAME_GITHUB: ${{ github.repository_owner }}/zerotier-moon
 
 jobs:
   build-and-push-alpine:
-    name: 构建并推送Alpine版本
+    name: Alpine
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: 检出代码
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: 设置QEMU
+      - name: QEMU Emulation
         uses: docker/setup-qemu-action@v2
 
-      - name: 设置Docker Buildx
+      - name: Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: 提取元数据
+      - name: Generate Metadata
         id: meta
         uses: docker/metadata-action@v4
         with:
@@ -61,7 +61,7 @@ jobs:
             type=raw,value=alpine
             type=raw,value=latest,enable=${{ github.event.inputs.USE_LATEST_TAG == 'true' }}
 
-      - name: 登录到DockerHub
+      - name: DockerHub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
@@ -69,14 +69,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 登录到GitHub Container Registry
+      - name: GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY_GITHUB }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 构建并推送镜像
+      - name: Build and Push
         uses: docker/build-push-action@v4
         with:
           context: .

@@ -2,7 +2,7 @@ FROM alpine:3.17
 
 # ARG ZT_VERSION=1.8.4-r0
 
-LABEL maintainer="Jonnyan404"
+LABEL maintainer="zvyzu"
 
 # RUN apk add --no-cache zerotier-one=${ZT_VERSION}
 RUN apk add --no-cache zerotier-one=1.10.2-r0

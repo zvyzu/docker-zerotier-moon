@@ -65,8 +65,7 @@ else
         echo "Starting ZeroTier service to generate identity..."
         nohup /usr/sbin/zerotier-one >/dev/null 2>&1 &
         ZT_PID=$!
-        
-        # 添加超时机制
+
         echo "Waiting for identity generation..."
         MAX_WAIT=30
         COUNT=0
@@ -86,23 +85,23 @@ else
             echo "Waiting... ($COUNT/$MAX_WAIT)"
         done
         echo "Identity generated successfully"
-        
+
         echo "Creating moon configuration..."
         /usr/sbin/zerotier-idtool initmoon /var/lib/zerotier-one/identity.public >>/var/lib/zerotier-one/moon.json
         sed -i 's/"stableEndpoints": \[\]/"stableEndpoints": ['$stableEndpointsForSed']/g' /var/lib/zerotier-one/moon.json
-        
+
         echo "Generating moon..."
         /usr/sbin/zerotier-idtool genmoon /var/lib/zerotier-one/moon.json > /dev/null
         mkdir -p /var/lib/zerotier-one/moons.d
         mv *.moon /var/lib/zerotier-one/moons.d/
-        
+
         echo "Stopping temporary ZeroTier instance..."
         pkill zerotier-one
-        
+
         echo "Starting ZeroTier with moon configuration..."
         moon_id=$(cat /var/lib/zerotier-one/moon.json | grep \"id\" | cut -d '"' -f4)
         echo -e "Your ZeroTier moon id is \033[0;31m$moon_id\033[0m, you could orbit moon using \033[0;31m\"zerotier-cli orbit $moon_id $moon_id\"\033[0m"
         printf "Your ZeroTier moon id is \033[0;31m$moon_id\033[0m, you could orbit moon using \033[0;31m\"zerotier-cli orbit $moon_id $moon_id\"\033[0m"
-        
+
         exec /usr/sbin/zerotier-one
 fi

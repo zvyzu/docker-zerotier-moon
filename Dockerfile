@@ -1,23 +1,20 @@
 ## NOTE: to retain configuration; mount a Docker volume, or use a bind-mount, on /var/lib/zerotier-one
-FROM debian:13-slim AS builder
+FROM dhi.io/debian-base:bookworm-debian12-dev AS builder
 
 ARG ZT_VERSION=1.14.2
 
-# 安装基本依赖
 RUN apt-get update && apt-get install -y curl gnupg ca-certificates wget apt-transport-https
-
 
 RUN curl -s 'https://raw.githubusercontent.com/zerotier/ZeroTierOne/main/doc/contact%40zerotier.com.gpg' | gpg --import && \
     if z=$(curl -s 'https://install.zerotier.com/' | gpg); then echo "$z" | bash; fi
-
 
 RUN apt-get update && apt-cache policy zerotier-one
 
 RUN apt-get install -y zerotier-one=${ZT_VERSION} || \
     apt-get install -y zerotier-one
 
-FROM debian:13-slim
-LABEL author="Jonnyan404"
+FROM dhi.io/debian-base:bookworm
+LABEL author="zvyzu"
 LABEL description="Containerized ZeroTier One for use on CoreOS or other Docker-only Linux hosts."
 
 # ZeroTier relies on UDP port 9993
