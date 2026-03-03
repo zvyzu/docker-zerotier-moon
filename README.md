@@ -1,13 +1,3 @@
-# update log
-
-> 2025年09月26日
-- 更新zerotier版本到1.16.0
-
-> 2025年04月05日
-- 默认`latest`标签,基于debian镜像,后续支持升级zerotier版本,当前版本`1.14.2`
-- 增加`alpine`标签,基于alpine镜像,[由于许可证原因](https://github.com/zerotier/ZeroTierOne/issues/2020)zerotier版本将固定在`1.10.2-r0`
-- 支持多CPU架构:amd64/arm64/armv7
-
 # docker-zerotier-moon
 A docker image to create ZeroTier moon in one setp.
 **Update docker source to the latest version of zerotier**
