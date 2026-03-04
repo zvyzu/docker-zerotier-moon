@@ -14,14 +14,18 @@ RUN apt-get install -y zerotier-one=${ZT_VERSION} || \
     apt-get install -y zerotier-one
 
 # Install runtime dependencies in builder and collect their files into /runtime-deps
-RUN apt-get install -y --no-install-recommends iproute2 iputils-ping libssl3t64 procps && \
+RUN apt-get install -y --no-install-recommends iproute2 iputils-ping libssl3 procps && \
     mkdir -p /runtime-deps && \
-    for pkg in iproute2 iputils-ping libssl3t64 procps libproc2-0 libmnl0 libcap2-bin libcap2 libelf1 libbpf1 libxtables12 libgpg-error0 libgcrypt20 liblz4-1 libzstd1 liblzma5 libsystemd0; do \
+    PKGS="iproute2 iputils-ping libssl3 procps" && \
+    ALL_PKGS=$(echo "$PKGS" | xargs -n1 | sort -u) && \
+    DEPS=$(for p in $ALL_PKGS; do apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances "$p" 2>/dev/null; done | grep '^\w' | sort -u) && \
+    ALL_PKGS=$(printf '%s\n%s' "$ALL_PKGS" "$DEPS" | sort -u) && \
+    for pkg in $ALL_PKGS; do \
         dpkg -L "$pkg" 2>/dev/null | while read -r f; do \
             if [ -f "$f" ] && [ ! -d "$f" ]; then \
                 dir=$(dirname "$f"); \
                 mkdir -p "/runtime-deps${dir}"; \
-                cp -aL "$f" "/runtime-deps${f}"; \
+                cp -aL "$f" "/runtime-deps${f}" 2>/dev/null || true; \
             fi; \
         done; \
     done
