@@ -13,6 +13,19 @@ RUN apt-get update && apt-cache policy zerotier-one
 RUN apt-get install -y zerotier-one=${ZT_VERSION} || \
     apt-get install -y zerotier-one
 
+# Install runtime dependencies in builder and collect their files into /runtime-deps
+RUN apt-get install -y --no-install-recommends iproute2 iputils-ping libssl3t64 procps && \
+    mkdir -p /runtime-deps && \
+    for pkg in iproute2 iputils-ping libssl3t64 procps libproc2-0 libmnl0 libcap2-bin libcap2 libelf1 libbpf1 libxtables12 libgpg-error0 libgcrypt20 liblz4-1 libzstd1 liblzma5 libsystemd0; do \
+        dpkg -L "$pkg" 2>/dev/null | while read -r f; do \
+            if [ -f "$f" ] && [ ! -d "$f" ]; then \
+                dir=$(dirname "$f"); \
+                mkdir -p "/runtime-deps${dir}"; \
+                cp -aL "$f" "/runtime-deps${f}"; \
+            fi; \
+        done; \
+    done
+
 FROM debian:bookworm-slim
 LABEL author="zvyzu"
 LABEL description="Containerized ZeroTier One for use on CoreOS or other Docker-only Linux hosts."
@@ -20,7 +33,10 @@ LABEL description="Containerized ZeroTier One for use on CoreOS or other Docker-
 # ZeroTier relies on UDP port 9993
 EXPOSE 9993/udp
 
-RUN apt-get update && apt-get install -y --no-install-recommends iproute2 iputils-ping libssl3t64 procps && rm -rf /var/lib/apt/lists/*
+# Copy runtime dependency files collected from builder
+COPY --from=builder /runtime-deps/ /
+RUN ldconfig
+
 RUN mkdir -p /var/lib/zerotier-one
 COPY --from=builder /usr/sbin/zerotier-cli /usr/sbin/zerotier-cli
 COPY --from=builder /usr/sbin/zerotier-idtool /usr/sbin/zerotier-idtool
