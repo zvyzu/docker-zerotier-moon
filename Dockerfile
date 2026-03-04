@@ -13,22 +13,21 @@ RUN apt-get update && apt-cache policy zerotier-one
 RUN apt-get install -y zerotier-one=${ZT_VERSION} || \
     apt-get install -y zerotier-one
 
-# Install runtime dependencies in builder and collect their files into /runtime-deps
+# Install runtime dependencies in builder and pack their files into a tar archive
 RUN apt-get install -y --no-install-recommends iproute2 iputils-ping libssl3 procps && \
-    mkdir -p /runtime-deps && \
     PKGS="iproute2 iputils-ping libssl3 procps" && \
     ALL_PKGS=$(echo "$PKGS" | xargs -n1 | sort -u) && \
     DEPS=$(for p in $ALL_PKGS; do apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances "$p" 2>/dev/null; done | grep '^\w' | sort -u) && \
     ALL_PKGS=$(printf '%s\n%s' "$ALL_PKGS" "$DEPS" | sort -u) && \
+    files="" && \
     for pkg in $ALL_PKGS; do \
-        dpkg -L "$pkg" 2>/dev/null | while read -r f; do \
+        for f in $(dpkg -L "$pkg" 2>/dev/null); do \
             if [ -f "$f" ] && [ ! -d "$f" ]; then \
-                dir=$(dirname "$f"); \
-                mkdir -p "/runtime-deps${dir}"; \
-                cp -aL "$f" "/runtime-deps${f}" 2>/dev/null || true; \
+                files="$files $f"; \
             fi; \
         done; \
-    done
+    done && \
+    tar cf /runtime-deps.tar $files 2>/dev/null || true
 
 FROM debian:bookworm-slim
 LABEL author="zvyzu"
@@ -37,9 +36,9 @@ LABEL description="Containerized ZeroTier One for use on CoreOS or other Docker-
 # ZeroTier relies on UDP port 9993
 EXPOSE 9993/udp
 
-# Copy runtime dependency files collected from builder
-COPY --from=builder /runtime-deps/ /
-RUN ldconfig
+# Extract runtime dependency files from builder
+COPY --from=builder /runtime-deps.tar /runtime-deps.tar
+RUN tar xf /runtime-deps.tar -C / && rm -f /runtime-deps.tar && ldconfig
 
 RUN mkdir -p /var/lib/zerotier-one
 COPY --from=builder /usr/sbin/zerotier-cli /usr/sbin/zerotier-cli
