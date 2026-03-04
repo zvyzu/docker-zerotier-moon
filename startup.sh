@@ -8,22 +8,28 @@
 # fi
 
 # usage ./startup.sh -4 1.2.3.4 -6 2001:abcd:abcd::1 -p 9993
-moon_port=9993 # default ZeroTier moon port
+# or via environment variables: ZT_IPV4, ZT_IPV6, ZT_PORT
+moon_port=${ZT_PORT:-9993} # default ZeroTier moon port, env fallback
 
-while getopts "4:6:p:" arg # handle args
+# Read from env first (if set)
+if [ -n "$ZT_IPV4" ]; then
+        ipv4_address="$ZT_IPV4"
+fi
+if [ -n "$ZT_IPV6" ]; then
+        ipv6_address="$ZT_IPV6"
+fi
+
+while getopts "4:6:p:" arg # handle args (CLI args override env)
 do
         case $arg in
              4)
                 ipv4_address="$OPTARG"
-                echo "IPv4 address: $ipv4_address"
                 ;;
              6)
                 ipv6_address="$OPTARG"
-                echo "IPv6 address: $ipv6_address"
                 ;;
              p)
                 moon_port="$OPTARG"
-                echo "Moon port: $moon_port"
                 ;;
              ?)
             echo "unknown argument"
@@ -31,6 +37,11 @@ do
         ;;
         esac
 done
+
+# Print resolved values
+[ -n "$ipv4_address" ] && echo "IPv4 address: $ipv4_address"
+[ -n "$ipv6_address" ] && echo "IPv6 address: $ipv6_address"
+echo "Moon port: $moon_port"
 
 echo "Setting up ZeroTier moon..."
 
