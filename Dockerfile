@@ -1,5 +1,5 @@
 ## NOTE: to retain configuration; mount a Docker volume, or use a bind-mount, on /var/lib/zerotier-one
-FROM debian-base:bookworm-debian12-dev AS builder
+FROM debian:bookworm AS builder
 
 ARG ZT_VERSION=1.14.2
 
@@ -13,7 +13,7 @@ RUN apt-get update && apt-cache policy zerotier-one
 RUN apt-get install -y zerotier-one=${ZT_VERSION} || \
     apt-get install -y zerotier-one
 
-FROM debian-base:bookworm
+FROM debian:bookworm-slim
 LABEL author="zvyzu"
 LABEL description="Containerized ZeroTier One for use on CoreOS or other Docker-only Linux hosts."
 
